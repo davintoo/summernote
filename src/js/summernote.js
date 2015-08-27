@@ -2,8 +2,18 @@ define([
   'jquery',
   'summernote/renderer',
   'summernote/core/func',
-  'summernote/module/Editor'
-], function ($, renderer, func, Editor) {
+  'summernote/module/Editor',
+  'summernote/module/Toolbar'
+], function ($, renderer, func, Editor, Toolbar) {
+
+  $.summernote = $.summernote || {};
+  $.summernote.modules = $.summernote.modules || {};
+  $.summernote.registerModule = function (name, Module) {
+    $.summernote.modules[name] = Module;
+  };
+
+  $.summernote.registerModule('editor', Editor);
+  $.summernote.registerModule('toolbar', Toolbar);
 
   /**
    * @class Summernote
@@ -16,6 +26,7 @@ define([
     this.modules = {};
     this.layoutInfo = {};
     this.options = options;
+    this.$note = $note;
 
     this.triggerEvent = function (namespace, args) {
       var callback = this.options.callbacks[func.namespaceToCamel(namespace, 'on')];
@@ -27,9 +38,37 @@ define([
 
     this.initialize = function () {
       this.layoutInfo = this.createLayout($note);
-      this.addModule('editor', new Editor(this, this.layoutInfo.editable));
+
+      this.initModule();
+
+      //this.addModule('editor', new Editor(this, this.layoutInfo.editable));
       $note.hide();
       return this;
+    };
+
+    this.initModule = function () {
+      for (var k in $.summernote.modules) {
+        var Module = $.summernote.modules[k];
+
+        this.addModule(k, new Module(this, this.layoutInfo));
+      }
+
+    };
+
+    this.invoke = function () {
+      var args = Array.prototype.slice.call(arguments);
+      var name = args.shift();
+      var module = name.split('.');
+
+      if (module.length === 1) {
+        return  this.modules[module[0]];
+      } else {
+        if (this.modules[module[0]]) {
+          return this.modules[module[0]][module[1]].apply(this.modules[module[0]], args);
+        }
+
+        return null;
+      }
     };
 
     this.destroy = function () {
@@ -67,6 +106,10 @@ define([
       delete this.modules[key];
     };
 
+    this.getOptions = function (moduleName) {
+      return this.options.modules ? (this.options.modules[moduleName] || {}) : {};
+    };
+
     return this.initialize();
   };
 
@@ -77,13 +120,11 @@ define([
      * @param {Object|String}
      * @return {this}
      */
-    summernote: function () {
+    summernote: function (options) {
       this.each(function (idx, note) {
         var $note = $(note);
         if (!$note.data('summernote')) {
-          $note.data('summernote', new Summernote($note, {
-            callbacks: {}
-          }));
+          $note.data('summernote', new Summernote($note, $.extend({ callbacks : {} }, options || {})));
         }
       });
     }

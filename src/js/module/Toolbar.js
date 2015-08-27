@@ -8,91 +8,45 @@ define([
    *
    * Toolbar
    */
-  var Toolbar = function () {
-    var button = new Button();
+  var Toolbar = function (summernote, layoutInfo) {
 
-    this.update = function ($toolbar, styleInfo) {
-      button.update($toolbar, styleInfo);
+    var $toolbar = null;
+    var toolbarOptions = summernote.getOptions('toolbar');
+
+
+    function ToolbarClickEvent() {
+      var event = $(this).data('event');
+      var value = $(this).data('value');
+
+      summernote.invoke(event, value);
+    }
+
+
+    this.initialize = function () {
+      this.initUI();
+      this.initEvent();
     };
 
-    /**
-     * @param {Node} button
-     * @param {String} eventName
-     * @param {String} value
-     */
-    this.updateRecentColor = function (buttonNode, eventName, value) {
-      button.updateRecentColor(buttonNode, eventName, value);
-    };
-
-    /**
-     * activate buttons exclude codeview
-     * @param {jQuery} $toolbar
-     */
-    this.activate = function ($toolbar) {
-      $toolbar.find('button')
-              .not('button[data-event="codeview"]')
-              .removeClass('disabled');
-    };
-
-    /**
-     * deactivate buttons exclude codeview
-     * @param {jQuery} $toolbar
-     */
-    this.deactivate = function ($toolbar) {
-      $toolbar.find('button')
-              .not('button[data-event="codeview"]')
-              .addClass('disabled');
-    };
-
-    /**
-     * @param {jQuery} $container
-     * @param {Boolean} [bFullscreen=false]
-     */
-    this.updateFullscreen = function ($container, bFullscreen) {
-      var $btn = $container.find('button[data-event="fullscreen"]');
-      $btn.toggleClass('active', bFullscreen);
-    };
-
-    /**
-     * @param {jQuery} $container
-     * @param {Boolean} [isCodeview=false]
-     */
-    this.updateCodeview = function ($container, isCodeview) {
-      var $btn = $container.find('button[data-event="codeview"]');
-      $btn.toggleClass('active', isCodeview);
-
-      if (isCodeview) {
-        this.deactivate($container);
+    this.initUI = function () {
+      if (typeof toolbarOptions === 'string') {
+        $toolbar = $(toolbarOptions);
       } else {
-        this.activate($container);
+        $toolbar = $('<div class="note-toolbar" />');
+
+        layoutInfo.editor.prepend($toolbar);
       }
     };
 
-    /**
-     * get button in toolbar 
-     *
-     * @param {jQuery} $editable
-     * @param {String} name
-     * @return {jQuery}
-     */
-    this.get = function ($editable, name) {
-      var $toolbar = dom.makeLayoutInfo($editable).toolbar();
-
-      return $toolbar.find('[data-name=' + name + ']');
+    this.initEvent = function () {
+      $toolbar.on('click', '[data-event]', ToolbarClickEvent);
     };
 
-    /**
-     * set button state
-     * @param {jQuery} $editable
-     * @param {String} name
-     * @param {Boolean} [isActive=true]
-     */
-    this.setButtonState = function ($editable, name, isActive) {
-      isActive = (isActive === false) ? false : true;
-
-      var $button = this.get($editable, name);
-      $button.toggleClass('active', isActive);
+    this.destroy = function () {
+      $toolbar.off('click', ToolbarClickEvent);
     };
+
+    this.initialize();
+
   };
 
   return Toolbar;

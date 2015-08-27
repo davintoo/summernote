@@ -15,7 +15,14 @@ require([
   'summernote'
 ], function ($) {
   // summernote
-  $('.summernote').summernote({
+  $('.summernote').eq(0).summernote({
+    height: 300,
+    modules : {
+      toolbar : '#externalToolbar'
+    }
+  });
+
+  $('.summernote').eq(1).summernote({
     height: 300
   });
 });

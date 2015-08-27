@@ -20,26 +20,28 @@ define([
    * @param {Summernote} summernote
    * @param {jQuery} $editable
    */
-  var Editor = function (summernote, $editable) {
+  var Editor = function (summernote, layoutInfo) {
     var self = this;
-
+    var $editable = layoutInfo.editable;
     var style = new Style();
     var table = new Table();
     var typing = new Typing();
     var bullet = new Bullet();
     var history = new History($editable);
 
+    function EditorKeydownEvent(e) {
+      if (e.keyCode === 13) {
+        e.preventDefault();
+        self.insertParagraph();
+      }
+    }
+
     this.initialize = function () {
-      $editable.on('keydown', function (e) {
-        if (e.keyCode === 13) {
-          e.preventDefault();
-          self.insertParagraph();
-        }
-      });
+      $editable.on('keydown', EditorKeydownEvent);
     };
 
     this.destroy = function () {
-      $editable.off('keydown');
+      $editable.off('keydown', EditorKeydownEvent);
     };
 
     /**
