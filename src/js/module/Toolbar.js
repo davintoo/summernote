@@ -8,10 +8,13 @@ define([
    *
    * Toolbar
    */
-  var Toolbar = function (summernote, layoutInfo) {
+  var Toolbar = function (summernote) {
 
     var $toolbar = null;
     var toolbarOptions = summernote.getOptions('toolbar');
+
+    var isExternal = typeof toolbarOptions === 'string';
+
 
 
     function ToolbarClickEvent() {
@@ -28,17 +31,18 @@ define([
     };
 
     this.initUI = function () {
-      if (typeof toolbarOptions === 'string') {
+      if (isExternal) {
         $toolbar = $(toolbarOptions);
       } else {
         $toolbar = $('<div class="note-toolbar" />');
 
-        layoutInfo.editor.prepend($toolbar);
+        summernote.layoutInfo.editor.prepend($toolbar);
       }
     };
 
     this.initEvent = function () {
       $toolbar.on('click', '[data-event]', ToolbarClickEvent);
+
     };
 
     this.destroy = function () {

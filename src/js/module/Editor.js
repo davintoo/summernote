@@ -5,12 +5,13 @@ define([
   'summernote/core/dom',
   'summernote/core/range',
   'summernote/core/async',
+  'summernote/core/key',
   'summernote/editing/History',
   'summernote/editing/Style',
   'summernote/editing/Typing',
   'summernote/editing/Table',
   'summernote/editing/Bullet'
-], function (agent, func, list, dom, range, async,
+], function (agent, func, list, dom, range, async, key,
              History, Style, Typing, Table, Bullet) {
 
   var KEY_BOGUS = 'bogus';
@@ -20,19 +21,36 @@ define([
    * @param {Summernote} summernote
    * @param {jQuery} $editable
    */
-  var Editor = function (summernote, layoutInfo) {
+  var Editor = function (summernote) {
     var self = this;
-    var $editable = layoutInfo.editable;
+    var $editable = summernote.layoutInfo.editable;
     var style = new Style();
     var table = new Table();
     var typing = new Typing();
     var bullet = new Bullet();
     var history = new History($editable);
+    var keyMap = summernote.options.keyMap[agent.isMac ? 'mac' : 'pc'] || {};
 
-    function EditorKeydownEvent(e) {
-      if (e.keyCode === 13) {
-        e.preventDefault();
-        self.insertParagraph();
+    function EditorKeydownEvent(event) {
+      var keys = [];
+
+      if (event.metaKey) { keys.push('CMD'); }
+      if (event.ctrlKey && !event.altKey) { keys.push('CTRL'); }
+      if (event.shiftKey) { keys.push('SHIFT'); }
+
+      var keyName = key.nameFromCode[event.keyCode];
+      if (keyName) {
+        keys.push(keyName);
+      }
+
+      var eventName = keyMap[keys.join('+')];
+      if (eventName) {
+        if (self[eventName]) {
+          self[eventName]();
+          event.preventDefault();
+        }
+      } else if (key.isEdit(event.keyCode)) {
+        self.afterCommand($editable);
       }
     }
 
@@ -96,6 +114,8 @@ define([
       var styleInfo =  rng && rng.isOnEditable() ? style.current(rng.normalize()) : {};
       if (dom.isImg(target)) {
         styleInfo.image = target;
+      } else if (dom.isLink(target)) {
+        styleInfo.link = target;
       }
       return styleInfo;
     };

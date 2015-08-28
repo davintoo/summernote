@@ -36,6 +36,10 @@ define([
       $note.trigger('summernote.' + namespace, args);
     };
 
+    this.watch = function (namespace, callback) {
+      $note.trigger('summernote.' + namespace, callback);
+    };
+
     this.initialize = function () {
       this.layoutInfo = this.createLayout($note);
 
@@ -50,7 +54,7 @@ define([
       for (var k in $.summernote.modules) {
         var Module = $.summernote.modules[k];
 
-        this.addModule(k, new Module(this, this.layoutInfo));
+        this.addModule(k, new Module(this));
       }
 
     };
@@ -60,15 +64,25 @@ define([
       var name = args.shift();
       var module = name.split('.');
 
-      if (module.length === 1) {
-        return  this.modules[module[0]];
-      } else {
-        if (this.modules[module[0]]) {
-          return this.modules[module[0]][module[1]].apply(this.modules[module[0]], args);
-        }
+      var moduleName = module[0];
+      var methodName = module[1];
 
-        return null;
+      if (module.length === 1) {
+
+        if (this.modules.editor[moduleName]) {
+          methodName = moduleName;
+          moduleName = 'editor';
+        } else {
+          return  this.modules[moduleName];
+        }
       }
+
+      var instance = this.modules[moduleName];
+      if (instance) {
+        return instance[methodName].apply(instance, args);
+      }
+
+      return null;
     };
 
     this.destroy = function () {
@@ -113,6 +127,11 @@ define([
     return this.initialize();
   };
 
+  var defaultOptions = {
+    callbacks : {},
+    keyMap : {}
+  };
+
   $.fn.extend({
     /**
      * Summernote API
@@ -124,7 +143,7 @@ define([
       this.each(function (idx, note) {
         var $note = $(note);
         if (!$note.data('summernote')) {
-          $note.data('summernote', new Summernote($note, $.extend({ callbacks : {} }, options || {})));
+          $note.data('summernote', new Summernote($note, $.extend(true, {},  defaultOptions, options || {})));
         }
       });
     }
