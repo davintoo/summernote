@@ -183,7 +183,7 @@
     /** @property {String} jqueryVersion current jQuery version string  */
     jqueryVersion: parseFloat($.fn.jquery),
     isSupportAmd: isSupportAmd,
-    hasCodeMirror: isSupportAmd ? require.specified('CodeMirror') : !!window.CodeMirror,
+    hasCodeMirror: true,
     isFontInstalled: isFontInstalled,
     isW3CRangeSupport: !!document.createRange
   };
